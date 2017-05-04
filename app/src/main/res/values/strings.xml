@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">PointsOfInterestApplication</string>
+    <string name="add_poi_activity"> Points Of Interest Options</string>
+</resources>

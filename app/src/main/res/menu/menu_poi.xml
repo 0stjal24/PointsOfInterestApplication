@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<item android:id="@+id/addpoi" android:title="Add Point of Interest"/>
+<item android:id="@+id/savepoi" android:title="Save Point of Interest"/>
+<item android:id="@+id/loadpoi" android:title="Load Point of Interest"/>
+
+</menu>
