@@ -1,8 +1,15 @@
 package com.example.a0stjal24.pointsofinterestapplication;
 
+import android.app.Fragment;
+import android.app.FragmentTransaction;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.content.Intent;
+import android.preference.CheckBoxPreference;
+import android.preference.Preference;
+import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.preference.SwitchPreference;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,6 +31,7 @@ public class MainActivity extends AppCompatActivity
     MapView mv;
     ItemizedIconOverlay<OverlayItem> items;
     ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
+    private boolean network;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -83,10 +91,16 @@ public class MainActivity extends AppCompatActivity
         }
         else if(item.getItemId() == R.id.savepoi)
         {
+
             return true;
         }
         else if(item.getItemId() == R.id.loadpoi)
         {
+            return true;
+        }
+        else if (item.getItemId() == R.id.prefs) {
+            Intent intent = new Intent(this, MyPreferenceActivity.class);
+            startActivityForResult(intent, 1);
             return true;
         }
         return false;
@@ -126,6 +140,22 @@ public class MainActivity extends AppCompatActivity
 
         //}
     }
+
+    public void onStart() {
+        super.onStart();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        network = prefs.getBoolean("network", false);
+    }
+
+
+
+
+
+    protected void onStop() {
+        super.onStop();
+
+    }
+
 
 
 }
