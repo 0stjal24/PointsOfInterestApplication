@@ -1,10 +1,12 @@
 package com.example.a0stjal24.pointsofinterestapplication;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.content.Intent;
+import android.os.Environment;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
@@ -22,6 +24,9 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.OverlayItem;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 
@@ -32,6 +37,7 @@ public class MainActivity extends AppCompatActivity
     ItemizedIconOverlay<OverlayItem> items;
     ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
     private boolean network;
+    private List<Pois> listOfPOIs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -91,11 +97,12 @@ public class MainActivity extends AppCompatActivity
         }
         else if(item.getItemId() == R.id.savepoi)
         {
-
+            savePoi();
             return true;
         }
         else if(item.getItemId() == R.id.loadpoi)
         {
+            loadPoi();
             return true;
         }
         else if (item.getItemId() == R.id.prefs) {
@@ -124,7 +131,7 @@ public class MainActivity extends AppCompatActivity
 
             OverlayItem addpoi = new OverlayItem(poiName, poiType + poiDesc, new GeoPoint(latitude, longitude));
 
-            // this.listPOIs.add(new POIs(poiname, poitype, poidescription, latitude, longitude));
+            this.listOfPOIs.add(new Pois(poiname, poitype, poidescription, latitude, longitude));
 
             items.addItem(addpoi);
 
@@ -145,6 +152,23 @@ public class MainActivity extends AppCompatActivity
         super.onStart();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         network = prefs.getBoolean("network", false);
+    }
+
+    private void savePoi(){
+        if(network != true) {
+            String savedDetails = "";
+            for (Pois pois : listOfPOIs){
+                savedDetails += pois.getName() + "," + pois.getType() + "," + pois.getDescription
+            }
+        }
+            try{
+                PrintWriter pw = new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath());
+                pw.println(savedDetails);
+                pw.flush();
+                pw.close();
+            }catch (IOException e) {
+                new AlertDialog.Builder(this).setMessage("Error: " + e).setPositiveButton("OK", null).show();
+            }
     }
 
 
