@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity
         }
         else if(item.getItemId() == R.id.loadpoi)
         {
-            //loadPoi();
+            loadPoi();
             return true;
         }
         else if (item.getItemId() == R.id.prefs) {
@@ -156,44 +156,79 @@ public class MainActivity extends AppCompatActivity
 
         }
     }
-   private void savePoi(){
+   private void savePoi() {
 
-       if (network == false){
+       if (network == false) {
 
 
-       Toast.makeText(MainActivity.this, "Saved marker", Toast.LENGTH_SHORT).show();
+           Toast.makeText(MainActivity.this, "Saved marker", Toast.LENGTH_SHORT).show();
 
-       String mark = "";
-       for(int i=0; i<items.size(); i++) {
-           OverlayItem item = items.getItem(i);
+
+           for (int i = 0; i < items.size(); i++) {
+               OverlayItem item = items.getItem(i);
+
+               String stringToSave = item.getTitle() + "," + item.getSnippet() + "," + item.getPoint();
+
+               try {
+                   PrintWriter pw = new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/markers.txt"));
+                   pw.println(stringToSave);
+                   pw.flush();
+                   pw.close();
+
+               } catch (IOException e) {
+                   new AlertDialog.Builder(this).setMessage("ERROR: " + e).show();
+
+
+               }
+
+
+           }
        }
 
+   }
 
-        try
+   @Override
+   protected void onStop() {
+       super.onStop();
+       savePoi();
+   }
+
+
+    private void loadPoi(){
+
+        Toast.makeText(MainActivity.this, "Markers Loaded", Toast.LENGTH_SHORT).show();
+
+        try {
+            FileReader fr = new FileReader(Environment.getExternalStorageDirectory().getAbsolutePath() + "/markers.txt");
+            BufferedReader reader = new BufferedReader(fr);
+            String stringToLoad;
+            while ((stringToLoad = reader.readLine()) != null)
             {
-                PrintWriter pw = new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/markers.txt"));
 
-                pw.println(mark);
-                pw.flush();
-                pw.close();
+                String[] markerprt = stringToLoad.split(",");
+                if(markerprt.length==4)
+                {
+                    double la=Double.parseDouble(markerprt[2]);
+                    double lo=Double.parseDouble(markerprt[3]);
+
+                    OverlayItem item = new OverlayItem (markerprt[0], markerprt[1], new GeoPoint(la, lo));
+                    items.addItem(item);
+                }
+
+
+
+
+
 
             }
-                catch(IOException e)
-            {
-                new AlertDialog.Builder(this).setMessage("ERROR: " + e).show();
+
+        }catch(IOException e){
+            new AlertDialog.Builder(this).setMessage("ERROR: " + e).show();
 
 
-            }
-
-
+        }
     }
-       else{
-           Toast.makeText(MainActivity.this, "Uploaded to network", Toast.LENGTH_SHORT).show();
-       }
-
-
-
-
+    
 }
 
 
@@ -208,7 +243,6 @@ public class MainActivity extends AppCompatActivity
 
 
 
-}
 
 
 //user021
