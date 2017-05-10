@@ -23,6 +23,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".AddPoiActivity" android:label="@string/add_poi_activity"></activity>
+        <activity android:name=".MyPreferenceActivity" android:label="Preferences"></activity>
     </application>
 
 </manifest>
