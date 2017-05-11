@@ -173,7 +173,7 @@ public class MainActivity extends AppCompatActivity
     }
    private void savePoi() {
 
-           Toast.makeText(MainActivity.this, "Saved marker", Toast.LENGTH_SHORT).show();
+
 
        try {
            PrintWriter pw = new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/markers.txt"));
@@ -231,69 +231,60 @@ public class MainActivity extends AppCompatActivity
 
     class LoadFromWeb extends AsyncTask<Void, Void, String> {
 
-        public String doInBackground(Void... unused)
-        {
+        @Override
+        public String doInBackground(Void... unused) {
             HttpURLConnection conn = null;
-            try
-            {
+            try {
                 URL url = new URL("http://www.free-map.org.uk/course/mad/ws/get.php?year=17&username=user021&format=json");
                 conn = (HttpURLConnection) url.openConnection();
                 InputStream in = conn.getInputStream();
 
-                if(conn.getResponseCode() == 200)
-                {
+                if (conn.getResponseCode() == 200) {
                     BufferedReader br = new BufferedReader(new InputStreamReader(in));
                     String result = "", line;
-                    while((line = br.readLine()) !=null)
+                    while ((line = br.readLine()) != null)
                         result += line;
                     return result;
-                }
-                else
+                } else
                     return "HTTP ERROR: " + conn.getResponseCode();
 
-            }
-            catch(IOException e)
-            {
+            } catch (IOException e) {
                 return e.toString();
-            }
-            finally
-            {
-                if(conn!=null)
+            } finally {
+                if (conn != null)
                     conn.disconnect();
             }
 
         }
 
-    }
 
-    public void onPostExecute(String result) {
-        try {
-            JSONArray jsonArray = new JSONArray(result);
+        @Override
+        protected void onPostExecute(String result) {
+            try {
+                JSONArray jsonArray = new JSONArray(result);
 
-            for (int i = 0; i < jsonArray.length(); i++) {
+                for (int i = 0; i < jsonArray.length(); i++) {
 
-                JSONObject object = jsonArray.getJSONObject(i);
+                    JSONObject object = jsonArray.getJSONObject(i);
 
-                String poiName = object.getString("name");
-                String poiType = object.getString("type");
-                String poiDesc = object.getString("desc");
-                double latitude = object.getDouble("lat");
-                double longitude = object.getDouble("lon");
+                    String poiName = object.getString("name");
+                    String poiType = object.getString("type");
+                    String poiDesc = object.getString("description");
+                    double latitude = object.getDouble("lat");
+                    double longitude = object.getDouble("lon");
 
-                OverlayItem item = new OverlayItem(poiName, poiType + poiDesc, new GeoPoint(latitude, longitude));
-                items.addItem(item);
-                mv.getOverlays().add(items);
+                    OverlayItem item = new OverlayItem(poiName, poiType + poiDesc, new GeoPoint(latitude, longitude));
+                    items.addItem(item);
+                    mv.getOverlays().add(items);
+                }
+                mv.refreshDrawableState();
+
+                Toast.makeText(MainActivity.this, "Markers Downloaded From Web!", Toast.LENGTH_SHORT).show();
+            } catch (JSONException e) {
+                new AlertDialog.Builder(MainActivity.this).setMessage(e.toString()).setPositiveButton("OK", null).show();
             }
-            mv.refreshDrawableState();
-
-            Toast.makeText(MainActivity.this, "Markers Downloaded From Web!", Toast.LENGTH_SHORT).show();
-        }
-        catch (JSONException e)
-        {
-            new AlertDialog.Builder(MainActivity.this).setMessage(e.toString()).setPositiveButton("OK", null).show();
         }
     }
-
 }
 
 
