@@ -15,6 +15,7 @@ import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.renderscript.ScriptGroup;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -22,6 +23,7 @@ import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -46,7 +48,7 @@ public class MainActivity extends AppCompatActivity
     MapView mv;
     ItemizedIconOverlay<OverlayItem> items;
     ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
-    private boolean network;
+    public boolean network;
 
 
     @Override
@@ -93,6 +95,13 @@ public class MainActivity extends AppCompatActivity
         inflater.inflate(R.menu.menu_poi, menu);
         return true;
     }
+
+    public void onStart()
+    {
+        super.onStart();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        network = prefs.getBoolean("network", true);
+    }
     // onOptionsItemSelected method takes MenuItem as a parameter
     // Can find out which MenuItem was selected bby using the getItemId() method of the MenuItem
     // This will return item's ID as defined in the menu.xml file.
@@ -122,70 +131,66 @@ public class MainActivity extends AppCompatActivity
             startActivityForResult(intent, 1);
             return true;
         }
+        else if (item.getItemId() == R.id.loadfromweb){
+            LoadFromWeb load = new LoadFromWeb();
+            load.execute();
+            return true;
+        }
         return false;
     }
 
 
     protected void onActivityResult(int requestCode,int resultCode, Intent intent)
     {
-        if(requestCode==0)
-        {
+        if (network == false) {
+            if (requestCode == 0) {
 
 
-            Bundle bundle = intent.getExtras();
+                Bundle bundle = intent.getExtras();
 
-            String poiName = bundle.getString("a0stjal24.name");
-            String poiType = bundle.getString("a0stjal24.type");
-            String poiDesc = bundle.getString("a0stjal24.desc");
+                String poiName = bundle.getString("a0stjal24.name");
+                String poiType = bundle.getString("a0stjal24.type");
+                String poiDesc = bundle.getString("a0stjal24.desc");
 
-            double latitude = mv.getMapCenter().getLatitude();
-            double longitude = mv.getMapCenter().getLongitude();
+                double latitude = mv.getMapCenter().getLatitude();
+                double longitude = mv.getMapCenter().getLongitude();
 
-            OverlayItem item = new OverlayItem(poiName, poiType + poiDesc, new GeoPoint(latitude, longitude));
+                OverlayItem item = new OverlayItem(poiName, poiType + poiDesc, new GeoPoint(latitude, longitude));
 
 
+                items.addItem(item);
+                mv.invalidate();
 
-            items.addItem(item);
-            mv.invalidate();
+                Toast.makeText(MainActivity.this, "Marker added!", Toast.LENGTH_SHORT).show();
 
-            Toast.makeText(MainActivity.this, "Marker added!", Toast.LENGTH_SHORT).show();
-
+            }
         }
-        else if(requestCode == 1)
-        {
+        else {
+            Toast.makeText(MainActivity.this, "Service is not available", Toast.LENGTH_SHORT).show();
+
 
         }
     }
    private void savePoi() {
 
-       if (network == false) {
-
-
            Toast.makeText(MainActivity.this, "Saved marker", Toast.LENGTH_SHORT).show();
 
+       try {
+           PrintWriter pw = new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/markers.txt"));
 
            for (int i = 0; i < items.size(); i++) {
                OverlayItem item = items.getItem(i);
-
-               String stringToSave = item.getTitle() + "," + item.getSnippet() + "," + item.getPoint();
-
-               try {
-                   PrintWriter pw = new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/markers.txt"));
-                   pw.println(stringToSave);
-                   pw.flush();
-                   pw.close();
-
-               } catch (IOException e) {
+               String stringToSave = item.getTitle() + "," + item.getSnippet() + "," + item.getPoint().getLatitude() + "," + item.getPoint().getLongitude();
+               pw.println(stringToSave);
+           }
+           pw.flush();
+           pw.close();
+       }
+           catch (IOException e) {
                    new AlertDialog.Builder(this).setMessage("ERROR: " + e).show();
 
-
                }
-
-
            }
-       }
-
-   }
 
    @Override
    protected void onStop() {
@@ -202,33 +207,93 @@ public class MainActivity extends AppCompatActivity
             FileReader fr = new FileReader(Environment.getExternalStorageDirectory().getAbsolutePath() + "/markers.txt");
             BufferedReader reader = new BufferedReader(fr);
             String stringToLoad;
+            Log.d("POI", "loading file");
             while ((stringToLoad = reader.readLine()) != null)
             {
-
+                Log.d("POI", stringToLoad);
                 String[] markerprt = stringToLoad.split(",");
                 if(markerprt.length==4)
                 {
                     double la=Double.parseDouble(markerprt[2]);
                     double lo=Double.parseDouble(markerprt[3]);
 
+                    Log.d("POI", markerprt[0] + " "+ markerprt[1] + " " + la + " "+ lo);
                     OverlayItem item = new OverlayItem (markerprt[0], markerprt[1], new GeoPoint(la, lo));
                     items.addItem(item);
                 }
-
-
-
-
-
-
             }
-
         }catch(IOException e){
             new AlertDialog.Builder(this).setMessage("ERROR: " + e).show();
 
 
         }
     }
-    
+
+    class LoadFromWeb extends AsyncTask<Void, Void, String> {
+
+        public String doInBackground(Void... unused)
+        {
+            HttpURLConnection conn = null;
+            try
+            {
+                URL url = new URL("http://www.free-map.org.uk/course/mad/ws/get.php?year=17&username=user021&format=json");
+                conn = (HttpURLConnection) url.openConnection();
+                InputStream in = conn.getInputStream();
+
+                if(conn.getResponseCode() == 200)
+                {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                    String result = "", line;
+                    while((line = br.readLine()) !=null)
+                        result += line;
+                    return result;
+                }
+                else
+                    return "HTTP ERROR: " + conn.getResponseCode();
+
+            }
+            catch(IOException e)
+            {
+                return e.toString();
+            }
+            finally
+            {
+                if(conn!=null)
+                    conn.disconnect();
+            }
+
+        }
+
+    }
+
+    public void onPostExecute(String result) {
+        try {
+            JSONArray jsonArray = new JSONArray(result);
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+
+                JSONObject object = jsonArray.getJSONObject(i);
+
+                String poiName = object.getString("name");
+                String poiType = object.getString("type");
+                String poiDesc = object.getString("desc");
+                double latitude = object.getDouble("lat");
+                double longitude = object.getDouble("lon");
+
+                OverlayItem item = new OverlayItem(poiName, poiType + poiDesc, new GeoPoint(latitude, longitude));
+                items.addItem(item);
+                mv.getOverlays().add(items);
+            }
+            mv.refreshDrawableState();
+
+            Toast.makeText(MainActivity.this, "Markers Downloaded From Web!", Toast.LENGTH_SHORT).show();
+        }
+        catch (JSONException e)
+        {
+            new AlertDialog.Builder(MainActivity.this).setMessage(e.toString()).setPositiveButton("OK", null).show();
+        }
+    }
+
 }
 
 

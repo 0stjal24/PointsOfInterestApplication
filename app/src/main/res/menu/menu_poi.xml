@@ -4,5 +4,6 @@
 <item android:id="@+id/savepoi" android:title="Save Point of Interest"/>
 <item android:id="@+id/loadpoi" android:title="Load Point of Interest"/>
 <item android:id="@+id/prefs" android:title="Preferences"/>
+    <item android:id="@+id/loadfromweb" android:title="Load From Web"/>
 
 </menu>
